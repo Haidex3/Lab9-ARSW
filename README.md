@@ -183,7 +183,111 @@ newman run ARSW_LOAD-BALANCING_AZURE.postman_collection.json -e [ARSW_LOAD-BALAN
 
 **Preguntas**
 
-* ¿Cuáles son los tipos de balanceadores de carga en Azure y en qué se diferencian?, ¿Qué es SKU, qué tipos hay y en qué se diferencian?, ¿Por qué el balanceador de carga necesita una IP pública?
+* ¿Cuáles son los tipos de balanceadores de carga en Azure y en qué se diferencian?
+
+* **Azure Load Balancer (Capa de transporte TCP/UDP)**
+
+   * Funciona en la capa de transporte, lo que significa que distribuye tráfico basado en dirección IP y puerto.
+   * No inspecciona contenido HTTP o HTTPS.
+   
+   * Puede ser público (recibe tráfico desde Internet) o interno (balancea dentro de una VNet).
+      
+   * Realiza el enrutamiento de paquetes mediante hash de IP de origen, IP de destino, puerto de origen y puerto de destino.
+      
+   * Permite configurar health probes (TCP o HTTP) para detectar el estado de los servidores backend.
+   
+   * Ofrece reglas de Network Address Translation (NAT) para publicar puertos específicos de VMs.
+   
+   * Su rendimiento es muy alto y de baja latencia.
+
+* **Azure Application Gateway (Capa de aplicación HTTP/HTTPS)**
+
+   * Opera en la capa de aplicación, por lo que inspecciona y entiende el tráfico HTTP/HTTPS.
+   
+   * Permite hacer balanceo basado en contenido, es decir, puede enrutar según: el host del encabezado, la ruta de URL, cabeceras HTTP o cookies.
+   
+   * Desencripta el tráfico HTTPS en el gateway y lo envía como HTTP a los backends.
+   
+   * Incluye un Web Application Firewall (WAF) integrado para proteger contra ataques como XSS, SQL Injection o CSRF.
+      
+   * Ofrece integración nativa con Azure Kubernetes Service (AKS) y Azure App Services.
+
+* **Azure Front Door**
+
+   * Opera en la capa de aplicación (HTTP/HTTPS), pero es un servicio global que usa la red perimetral (edge network) de Azure.
+   
+   * Proporciona balanceo de carga global: distribuye tráfico entre aplicaciones desplegadas en distintas regiones geográficas.
+   
+   * Incluye aceleración mediante CDN (Content Delivery Network), lo que reduce la latencia para usuarios distribuidos globalmente.
+   
+   * Realiza enrutamiento inteligente basado en: latencia del cliente, disponibilidad regional, estado de salud del backend.
+
+
+* **Azure Traffic Manager (Nivel DNS)**
+
+   * Funciona a nivel de DNS (capa 3), no balancea tráfico directamente sino que resuelve nombres de dominio hacia diferentes endpoints.
+   
+   * No toca los paquetes de datos, solo redirecciona al cliente hacia la IP o región más adecuada según políticas.
+   
+   * Es independiente del protocolo, ya que actúa antes de que se establezca la conexión (HTTP, TCP, etc.).
+   
+   * Usa métodos de enrutamiento configurables:
+   
+      * Priority: dirige el tráfico al primer endpoint activo (para alta disponibilidad).
+      
+      * Weighted: reparte el tráfico según pesos asignados.
+      
+      * Performance: envía a la región con menor latencia.
+      
+      * Geographic: asigna regiones por país o continente.
+
+* ¿Qué es SKU, qué tipos hay y en qué se diferencian?, ¿Por qué el balanceador de carga necesita una IP pública?
+
+SKU (Stock Keeping Unit) se usa en Azure para distinguir versiones o configuraciones de un mismo recurso. Define qué características, límites y precios tiene un servicio. Por ejemplo:
+
+   * Su alcance (regional o zonal)
+
+   * Su nivel de seguridad
+
+   * Su rendimiento y disponibilidad
+     
+Tipos: 
+
+**Basic SKU**
+
+   * Solo puede existir dentro de una misma red virtual (VNet).
+   No puede balancear tráfico entre redes o zonas de disponibilidad.
+   
+   * Soporta un número limitado de instancias backend (hasta 300).
+   
+   * No tiene soporte para alta disponibilidad entre zonas (Redundancia zonal).
+   
+   * El Health Probe es básico (solo TCP o HTTP simple).
+   
+   * No tiene integración con Azure Monitor ni métricas avanzadas.
+      
+   * Las reglas de salida (outbound) están fijas y no se pueden personalizar.
+   
+
+**Standard SKU**
+
+   * Es la versión empresarial y de producción, diseñada para alta disponibilidad, resiliencia y control granular.
+      
+   * Alta disponibilidad zonal: el balanceador puede distribuir tráfico entre zonas de disponibilidad (AZs), ofreciendo tolerancia a fallos a nivel físico.
+   
+   * Soporta hasta 1000 instancias backend o más (depende de la región).
+   
+   * Permite tanto balanceo interno como público, con múltiples IPs front-end.
+   
+   * Incluye métricas y diagnósticos detallados integrados con Azure Monitor y Log Analytics.
+   
+   * Es seguro por defecto: el tráfico de entrada se bloquea hasta que se configuren Network Security Groups (NSGs) explícitamente.
+      
+   * Permite reglas NAT múltiples, reutilización de puertos y configuración avanzada de outbound.
+
+**Un balanceador de carga necesita una IP pública** porque expone un endpoint de nivel de red (Network Frontend) asociado a una dirección IP pública estática.
+Esta IP pública actúa como punto de terminación para el tráfico proveniente de Internet, permitiendo la traducción de direcciones públicas a privadas (NAT) y la distribución de conexiones hacia instancias backend dentro de una red virtual (VNet).
+
 * ¿Cuál es el propósito del *Backend Pool*?
 * ¿Cuál es el propósito del *Health Probe*?
 * ¿Cuál es el propósito de la *Load Balancing Rule*? ¿Qué tipos de sesión persistente existen, por qué esto es importante y cómo puede afectar la escalabilidad del sistema?.
