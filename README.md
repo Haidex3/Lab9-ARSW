@@ -289,11 +289,60 @@ Tipos:
 Esta IP pública actúa como punto de terminación para el tráfico proveniente de Internet, permitiendo la traducción de direcciones públicas a privadas (NAT) y la distribución de conexiones hacia instancias backend dentro de una red virtual (VNet).
 
 * ¿Cuál es el propósito del *Backend Pool*?
+
+El Backend Pool en Azure Load Balancer es el conjunto lógico de endpoints destino (interfaces de red, IPs privadas o instancias de un Scale Set) donde el balanceador distribuye el tráfico entrante definido en sus reglas. Los paquetes que llegan al Frontend IP son reenrutados mediante NAT hacia una de las instancias del pool, seleccionada según el algoritmo de distribución (hash de IP y puerto) y el estado reportado por el Health Probe.
+
 * ¿Cuál es el propósito del *Health Probe*?
+
+El Health Probe en Azure Load Balancer es el mecanismo de supervisión activa que verifica periódicamente la disponibilidad de los endpoints del Backend Pool mediante sondeos TCP o HTTP.
+Su propósito técnico es actualizar dinámicamente el plano de control del balanceador, marcando las instancias como Healthy o Unhealthy para que solo los destinos operativos reciban tráfico.
+  
 * ¿Cuál es el propósito de la *Load Balancing Rule*? ¿Qué tipos de sesión persistente existen, por qué esto es importante y cómo puede afectar la escalabilidad del sistema?.
+
+La Load Balancing Rule en Azure define el mapeo de tráfico entre el Frontend y el Backend Pool, especificando puerto, protocolo, Health Probe y política de sesión persistente.
+Controla cómo el balanceador distribuye las conexiones entrantes hacia las instancias disponibles del backend.
+
+Los tipos de sesión persistente son:
+
+   * None: Sin afinidad. Cada solicitud puede ir a cualquier backend (stateless, mayor escalabilidad).
+   
+   * Client IP: Todas las solicitudes desde una misma IP se envían al mismo backend (stateful, mantiene sesión).
+   
+   * Client IP + Protocol: Afinidad por IP y protocolo, útil para servicios mixtos TCP/UDP. Por ejemplo, cuando una misma IP de cliente abre conexiones por diferentes servicios (ej., HTTP y WebSocket).
+
+La persistencia es importante porque garantiza continuidad de sesión, pero limita la capacidad del balanceador para distribuir carga equitativamente, reduciendo la escalabilidad y tolerancia a fallos en sistemas que dependen de afinidad.
+  
 * ¿Qué es una *Virtual Network*? ¿Qué es una *Subnet*? ¿Para qué sirven los *address space* y *address range*?
+
+Una **Virtual Network (VNet)** en Azure es una red privada virtual y aislada dentro de la nube, que permite comunicar de forma segura los recursos (como máquinas virtuales, bases de datos o aplicaciones) entre sí y con otras redes. Define un espacio de direcciones IP (address space) propio, por ejemplo 10.0.0.0/16 (usado en el laboratorio) dentro del cual se crean subredes (subnets), reglas de ruteo y seguridad (NSG) para controlar cómo fluye el tráfico dentro y fuera de esa red.
+
+Una **Subnet** es una división lógica del address space de la VNet, que agrupa recursos bajo un mismo rango de IP y políticas de red. Cada subred tiene su propio address range (subconjunto CIDR) y puede tener asociadas reglas de Network Security Groups (NSG) o ruteo personalizado (UDR), por ejemplo 10.0.0.0/24 (usado en el laboratorio).
+
+**Address Space:**
+Es el bloque principal de direcciones IP asignado a toda la VNet, expresado en formato CIDR.
+Define los límites de IPs disponibles en esa red virtual.
+
+**Address Range:**
+Es el subconjunto del address space que se asigna a cada subnet. Determina las IPs que pueden usar los recursos dentro de esa subred.
+  
 * ¿Qué son las *Availability Zone* y por qué seleccionamos 3 diferentes zonas?. ¿Qué significa que una IP sea *zone-redundant*?
+
+Es una unidad física de aislamiento dentro de una región de Azure, compuesta por uno o varios centros de datos independientes con su propia energía, refrigeración y red. Estas zonas están interconectadas con baja latencia, pero lo suficientemente aisladas para que una falla eléctrica, de red o de hardware en una zona no afecte las otras.
+
+Se distribuyeron las 3 máquinas virtuales en distintas zonas para lograr alta disponibilidad y tolerancia a fallos:
+
+* Si una zona completa sufre una caída física o de red, las otras dos zonas continúan operando.
+
+* El Load Balancer Standard detecta automáticamente, mediante los Health Probes, qué VMs siguen activas y redirige el tráfico solo a las que están disponibles.
+
+* Esto implementa un modelo de resiliencia zonal, en el que el servicio permanece activo incluso ante una falla local.
+
+Que una IP sea **zone-redundant** significa que no pertenece físicamente a una sola zona de disponibilidad, sino que existe y funciona al mismo tiempo en todas las zonas de la región. La IP no se cae si una zona falla, porque Azure la tiene replicada en la infraestructura de red de todas las zonas.
+
 * ¿Cuál es el propósito del *Network Security Group*?
+
+El Network Security Group (NSG) en Azure tiene como propósito controlar y filtrar el tráfico de red entrante y saliente hacia los recursos de una VNet, como máquinas virtuales, subnets o interfaces de red. Técnicamente, un NSG actúa como un firewall de capa de transporte, que aplica reglas de seguridad basadas en IP, puerto y protocolo (TCP/UDP). Cada regla define si se permite o bloquea el tráfico, según origen, destino, dirección y prioridad.
+  
 * Informe de newman 1 (Punto 2)
 * Presente el Diagrama de Despliegue de la solución.
 
