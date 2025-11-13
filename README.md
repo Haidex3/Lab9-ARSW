@@ -47,16 +47,16 @@ Cuando un conjunto de usuarios consulta un enésimo número (superior a 1000000)
 ![](images/part1/part1-vm-3000InboudRule.png)
 
 7. La función que calcula en enésimo número de la secuencia de Fibonacci está muy mal construido y consume bastante CPU para obtener la respuesta. Usando la consola del Browser documente los tiempos de respuesta para dicho endpoint usando los siguintes valores:
-    * 1000000
-    * 1010000
-    * 1020000
-    * 1030000
-    * 1040000
-    * 1050000
-    * 1060000
-    * 1070000
-    * 1080000
-    * 1090000    
+    * 1000000 - 16.01 s
+    * 1010000 - 16.34 s
+    * 1020000 - 16.56 s
+    * 1030000 - 16.92 s
+    * 1040000 - 17.38 s
+    * 1050000 - 19.31 s
+    * 1060000 - 18.27 s
+    * 1070000 - 18.64 s
+    * 1080000 - 18.93 s
+    * 1090000 - 19.27 s
 
 8. Dírijase ahora a Azure y verifique el consumo de CPU para la VM. (Los resultados pueden tardar 5 minutos en aparecer).
 
@@ -78,6 +78,19 @@ Cuando un conjunto de usuarios consulta un enésimo número (superior a 1000000)
 ![Imágen 3](images/part1/part1-vm-resize.png)
 
 11. Una vez el cambio se vea reflejado, repita el paso 7, 8 y 9.
+
+    * 1000000 - 12.40 s
+    * 1010000 - 10.66 s
+    * 1020000 - 10.93 s
+    * 1030000 - 11.12 s
+    * 1040000 - 11.56 s
+    * 1050000 - 11.51 s
+    * 1060000 - 11.68 s
+    * 1070000 - 11.90 s
+    * 1080000 - 12.15 s
+    * 1090000 - 12.47 s
+
+
 12. Evalue el escenario de calidad asociado al requerimiento no funcional de escalabilidad y concluya si usando este modelo de escalabilidad logramos cumplirlo.
 13. Vuelva a dejar la VM en el tamaño inicial para evitar cobros adicionales.
 
