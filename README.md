@@ -169,10 +169,29 @@ Realice este proceso para las 3 VMs, por ahora lo haremos a mano una por una, si
 http://52.155.223.248/
 http://52.155.223.248/fibonacci/1
 ```
+**Evidencias**
+
+<img src="images/solution/endpoint1.png" width="500px">
+
+<img src="images/solution/endpoint2.png" width="500px">
 
 2. Realice las pruebas de carga con `newman` que se realizaron en la parte 1 y haga un informe comparativo donde contraste: tiempos de respuesta, cantidad de peticiones respondidas con éxito, costos de las 2 infraestrucruras, es decir, la que desarrollamos con balanceo de carga horizontal y la que se hizo con una maquina virtual escalada.
 
+<img src="images/solution/newman p3.png" width="800px">
+
+**[INFORME](./INFORME.md)**
+
 3. Agregue una 4 maquina virtual y realice las pruebas de newman, pero esta vez no lance 2 peticiones en paralelo, sino que incrementelo a 4. Haga un informe donde presente el comportamiento de la CPU de las 4 VM y explique porque la tasa de éxito de las peticiones aumento con este estilo de escalabilidad.
+
+<img src="images/solution/vm4.png" width="500px">
+
+<img src="images/solution/vm1 cpu.jpg" width="500px">
+
+<img src="images/solution/vm2 cpu.jpg" width="500px">
+
+<img src="images/solution/vm3 cpu.jpg" width="500px">
+
+<img src="images/solution/vm4 cpu.jpg" width="500px">
 
 ```
 newman run ARSW_LOAD-BALANCING_AZURE.postman_collection.json -e [ARSW_LOAD-BALANCING_AZURE].postman_environment.json -n 10 &
@@ -344,7 +363,12 @@ Que una IP sea **zone-redundant** significa que no pertenece físicamente a una 
 El Network Security Group (NSG) en Azure tiene como propósito controlar y filtrar el tráfico de red entrante y saliente hacia los recursos de una VNet, como máquinas virtuales, subnets o interfaces de red. Técnicamente, un NSG actúa como un firewall de capa de transporte, que aplica reglas de seguridad basadas en IP, puerto y protocolo (TCP/UDP). Cada regla define si se permite o bloquea el tráfico, según origen, destino, dirección y prioridad.
   
 * Informe de newman 1 (Punto 2)
+
+**[INFORME](./INFORME.md)**
+  
 * Presente el Diagrama de Despliegue de la solución.
+
+<img src="images/solution/diagrama de despliegue.png" width="500px">
 
 
 
