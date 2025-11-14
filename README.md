@@ -420,10 +420,29 @@ Realice este proceso para las 3 VMs, por ahora lo haremos a mano una por una, si
 http://52.155.223.248/
 http://52.155.223.248/fibonacci/1
 ```
+**Evidencias**
+
+<img src="images/solution/endpoint1.png" width="500px">
+
+<img src="images/solution/endpoint2.png" width="500px">
 
 2. Realice las pruebas de carga con `newman` que se realizaron en la parte 1 y haga un informe comparativo donde contraste: tiempos de respuesta, cantidad de peticiones respondidas con éxito, costos de las 2 infraestrucruras, es decir, la que desarrollamos con balanceo de carga horizontal y la que se hizo con una maquina virtual escalada.
 
+<img src="images/solution/newman p3.png" width="800px">
+
+**[INFORME](./INFORME.md)**
+
 3. Agregue una 4 maquina virtual y realice las pruebas de newman, pero esta vez no lance 2 peticiones en paralelo, sino que incrementelo a 4. Haga un informe donde presente el comportamiento de la CPU de las 4 VM y explique porque la tasa de éxito de las peticiones aumento con este estilo de escalabilidad.
+
+<img src="images/solution/vm4.png" width="500px">
+
+<img src="images/solution/vm1 cpu.jpg" width="500px">
+
+<img src="images/solution/vm2 cpu.jpg" width="500px">
+
+<img src="images/solution/vm3 cpu.jpg" width="500px">
+
+<img src="images/solution/vm4 cpu.jpg" width="500px">
 
 ```
 newman run ARSW_LOAD-BALANCING_AZURE.postman_collection.json -e [ARSW_LOAD-BALANCING_AZURE].postman_environment.json -n 10 &
@@ -434,15 +453,173 @@ newman run ARSW_LOAD-BALANCING_AZURE.postman_collection.json -e [ARSW_LOAD-BALAN
 
 **Preguntas**
 
-* ¿Cuáles son los tipos de balanceadores de carga en Azure y en qué se diferencian?, ¿Qué es SKU, qué tipos hay y en qué se diferencian?, ¿Por qué el balanceador de carga necesita una IP pública?
+* ¿Cuáles son los tipos de balanceadores de carga en Azure y en qué se diferencian?
+
+* **Azure Load Balancer (Capa de transporte TCP/UDP)**
+
+   * Funciona en la capa de transporte, lo que significa que distribuye tráfico basado en dirección IP y puerto.
+   * No inspecciona contenido HTTP o HTTPS.
+   
+   * Puede ser público (recibe tráfico desde Internet) o interno (balancea dentro de una VNet).
+      
+   * Realiza el enrutamiento de paquetes mediante hash de IP de origen, IP de destino, puerto de origen y puerto de destino.
+      
+   * Permite configurar health probes (TCP o HTTP) para detectar el estado de los servidores backend.
+   
+   * Ofrece reglas de Network Address Translation (NAT) para publicar puertos específicos de VMs.
+   
+   * Su rendimiento es muy alto y de baja latencia.
+
+* **Azure Application Gateway (Capa de aplicación HTTP/HTTPS)**
+
+   * Opera en la capa de aplicación, por lo que inspecciona y entiende el tráfico HTTP/HTTPS.
+   
+   * Permite hacer balanceo basado en contenido, es decir, puede enrutar según: el host del encabezado, la ruta de URL, cabeceras HTTP o cookies.
+   
+   * Desencripta el tráfico HTTPS en el gateway y lo envía como HTTP a los backends.
+   
+   * Incluye un Web Application Firewall (WAF) integrado para proteger contra ataques como XSS, SQL Injection o CSRF.
+      
+   * Ofrece integración nativa con Azure Kubernetes Service (AKS) y Azure App Services.
+
+* **Azure Front Door**
+
+   * Opera en la capa de aplicación (HTTP/HTTPS), pero es un servicio global que usa la red perimetral (edge network) de Azure.
+   
+   * Proporciona balanceo de carga global: distribuye tráfico entre aplicaciones desplegadas en distintas regiones geográficas.
+   
+   * Incluye aceleración mediante CDN (Content Delivery Network), lo que reduce la latencia para usuarios distribuidos globalmente.
+   
+   * Realiza enrutamiento inteligente basado en: latencia del cliente, disponibilidad regional, estado de salud del backend.
+
+
+* **Azure Traffic Manager (Nivel DNS)**
+
+   * Funciona a nivel de DNS (capa 3), no balancea tráfico directamente sino que resuelve nombres de dominio hacia diferentes endpoints.
+   
+   * No toca los paquetes de datos, solo redirecciona al cliente hacia la IP o región más adecuada según políticas.
+   
+   * Es independiente del protocolo, ya que actúa antes de que se establezca la conexión (HTTP, TCP, etc.).
+   
+   * Usa métodos de enrutamiento configurables:
+   
+      * Priority: dirige el tráfico al primer endpoint activo (para alta disponibilidad).
+      
+      * Weighted: reparte el tráfico según pesos asignados.
+      
+      * Performance: envía a la región con menor latencia.
+      
+      * Geographic: asigna regiones por país o continente.
+
+* ¿Qué es SKU, qué tipos hay y en qué se diferencian?, ¿Por qué el balanceador de carga necesita una IP pública?
+
+SKU (Stock Keeping Unit) se usa en Azure para distinguir versiones o configuraciones de un mismo recurso. Define qué características, límites y precios tiene un servicio. Por ejemplo:
+
+   * Su alcance (regional o zonal)
+
+   * Su nivel de seguridad
+
+   * Su rendimiento y disponibilidad
+     
+Tipos: 
+
+**Basic SKU**
+
+   * Solo puede existir dentro de una misma red virtual (VNet).
+   No puede balancear tráfico entre redes o zonas de disponibilidad.
+   
+   * Soporta un número limitado de instancias backend (hasta 300).
+   
+   * No tiene soporte para alta disponibilidad entre zonas (Redundancia zonal).
+   
+   * El Health Probe es básico (solo TCP o HTTP simple).
+   
+   * No tiene integración con Azure Monitor ni métricas avanzadas.
+      
+   * Las reglas de salida (outbound) están fijas y no se pueden personalizar.
+   
+
+**Standard SKU**
+
+   * Es la versión empresarial y de producción, diseñada para alta disponibilidad, resiliencia y control granular.
+      
+   * Alta disponibilidad zonal: el balanceador puede distribuir tráfico entre zonas de disponibilidad (AZs), ofreciendo tolerancia a fallos a nivel físico.
+   
+   * Soporta hasta 1000 instancias backend o más (depende de la región).
+   
+   * Permite tanto balanceo interno como público, con múltiples IPs front-end.
+   
+   * Incluye métricas y diagnósticos detallados integrados con Azure Monitor y Log Analytics.
+   
+   * Es seguro por defecto: el tráfico de entrada se bloquea hasta que se configuren Network Security Groups (NSGs) explícitamente.
+      
+   * Permite reglas NAT múltiples, reutilización de puertos y configuración avanzada de outbound.
+
+**Un balanceador de carga necesita una IP pública** porque expone un endpoint de nivel de red (Network Frontend) asociado a una dirección IP pública estática.
+Esta IP pública actúa como punto de terminación para el tráfico proveniente de Internet, permitiendo la traducción de direcciones públicas a privadas (NAT) y la distribución de conexiones hacia instancias backend dentro de una red virtual (VNet).
+
 * ¿Cuál es el propósito del *Backend Pool*?
+
+El Backend Pool en Azure Load Balancer es el conjunto lógico de endpoints destino (interfaces de red, IPs privadas o instancias de un Scale Set) donde el balanceador distribuye el tráfico entrante definido en sus reglas. Los paquetes que llegan al Frontend IP son reenrutados mediante NAT hacia una de las instancias del pool, seleccionada según el algoritmo de distribución (hash de IP y puerto) y el estado reportado por el Health Probe.
+
 * ¿Cuál es el propósito del *Health Probe*?
+
+El Health Probe en Azure Load Balancer es el mecanismo de supervisión activa que verifica periódicamente la disponibilidad de los endpoints del Backend Pool mediante sondeos TCP o HTTP.
+Su propósito técnico es actualizar dinámicamente el plano de control del balanceador, marcando las instancias como Healthy o Unhealthy para que solo los destinos operativos reciban tráfico.
+  
 * ¿Cuál es el propósito de la *Load Balancing Rule*? ¿Qué tipos de sesión persistente existen, por qué esto es importante y cómo puede afectar la escalabilidad del sistema?.
+
+La Load Balancing Rule en Azure define el mapeo de tráfico entre el Frontend y el Backend Pool, especificando puerto, protocolo, Health Probe y política de sesión persistente.
+Controla cómo el balanceador distribuye las conexiones entrantes hacia las instancias disponibles del backend.
+
+Los tipos de sesión persistente son:
+
+   * None: Sin afinidad. Cada solicitud puede ir a cualquier backend (stateless, mayor escalabilidad).
+   
+   * Client IP: Todas las solicitudes desde una misma IP se envían al mismo backend (stateful, mantiene sesión).
+   
+   * Client IP + Protocol: Afinidad por IP y protocolo, útil para servicios mixtos TCP/UDP. Por ejemplo, cuando una misma IP de cliente abre conexiones por diferentes servicios (ej., HTTP y WebSocket).
+
+La persistencia es importante porque garantiza continuidad de sesión, pero limita la capacidad del balanceador para distribuir carga equitativamente, reduciendo la escalabilidad y tolerancia a fallos en sistemas que dependen de afinidad.
+  
 * ¿Qué es una *Virtual Network*? ¿Qué es una *Subnet*? ¿Para qué sirven los *address space* y *address range*?
+
+Una **Virtual Network (VNet)** en Azure es una red privada virtual y aislada dentro de la nube, que permite comunicar de forma segura los recursos (como máquinas virtuales, bases de datos o aplicaciones) entre sí y con otras redes. Define un espacio de direcciones IP (address space) propio, por ejemplo 10.0.0.0/16 (usado en el laboratorio) dentro del cual se crean subredes (subnets), reglas de ruteo y seguridad (NSG) para controlar cómo fluye el tráfico dentro y fuera de esa red.
+
+Una **Subnet** es una división lógica del address space de la VNet, que agrupa recursos bajo un mismo rango de IP y políticas de red. Cada subred tiene su propio address range (subconjunto CIDR) y puede tener asociadas reglas de Network Security Groups (NSG) o ruteo personalizado (UDR), por ejemplo 10.0.0.0/24 (usado en el laboratorio).
+
+**Address Space:**
+Es el bloque principal de direcciones IP asignado a toda la VNet, expresado en formato CIDR.
+Define los límites de IPs disponibles en esa red virtual.
+
+**Address Range:**
+Es el subconjunto del address space que se asigna a cada subnet. Determina las IPs que pueden usar los recursos dentro de esa subred.
+  
 * ¿Qué son las *Availability Zone* y por qué seleccionamos 3 diferentes zonas?. ¿Qué significa que una IP sea *zone-redundant*?
+
+Es una unidad física de aislamiento dentro de una región de Azure, compuesta por uno o varios centros de datos independientes con su propia energía, refrigeración y red. Estas zonas están interconectadas con baja latencia, pero lo suficientemente aisladas para que una falla eléctrica, de red o de hardware en una zona no afecte las otras.
+
+Se distribuyeron las 3 máquinas virtuales en distintas zonas para lograr alta disponibilidad y tolerancia a fallos:
+
+* Si una zona completa sufre una caída física o de red, las otras dos zonas continúan operando.
+
+* El Load Balancer Standard detecta automáticamente, mediante los Health Probes, qué VMs siguen activas y redirige el tráfico solo a las que están disponibles.
+
+* Esto implementa un modelo de resiliencia zonal, en el que el servicio permanece activo incluso ante una falla local.
+
+Que una IP sea **zone-redundant** significa que no pertenece físicamente a una sola zona de disponibilidad, sino que existe y funciona al mismo tiempo en todas las zonas de la región. La IP no se cae si una zona falla, porque Azure la tiene replicada en la infraestructura de red de todas las zonas.
+
 * ¿Cuál es el propósito del *Network Security Group*?
+
+El Network Security Group (NSG) en Azure tiene como propósito controlar y filtrar el tráfico de red entrante y saliente hacia los recursos de una VNet, como máquinas virtuales, subnets o interfaces de red. Técnicamente, un NSG actúa como un firewall de capa de transporte, que aplica reglas de seguridad basadas en IP, puerto y protocolo (TCP/UDP). Cada regla define si se permite o bloquea el tráfico, según origen, destino, dirección y prioridad.
+  
 * Informe de newman 1 (Punto 2)
+
+**[INFORME](./INFORME.md)**
+  
 * Presente el Diagrama de Despliegue de la solución.
+
+<img src="images/solution/diagrama de despliegue.png" width="500px">
 
 
 
